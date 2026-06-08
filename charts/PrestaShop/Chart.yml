@@ -1,0 +1,9 @@
+apiVersion: v2
+name: PrestaShop
+version: 1.0.1
+kubeVersion: ">=1.33"
+description: Chart for deploy PrestaShop.
+type: application
+maintainers:
+  - name: "HawerPL"
+appVersion: 1.0.1

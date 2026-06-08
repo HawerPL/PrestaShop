@@ -1,0 +1,88 @@
+services:
+  prestashop:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        PRESTASHOP_IMAGE: ${PS_IMAGE:-prestashop/prestashop:9}
+    restart: ${PS_RESTART_POLICY:-unless-stopped}
+    ports:
+      - ${PS_EXTERNAL_PORT:-8080}:80
+    environment:
+      PS_DEV_MODE: ${PS_DEV_MODE:-0}
+      PS_HOST_MODE: ${PS_HOST_MODE:-0}
+      PS_DEMO_MODE: ${PS_DEMO_MODE:-0}
+      PS_INSTALL_AUTO: ${PS_INSTALL_AUTO:-0}
+      PS_ERASE_DB: ${PS_ERASE_DB:-0}
+      PS_INSTALL_DB: ${PS_INSTALL_DB:-0}
+      PS_DOMAIN: ${PS_DOMAIN}
+      PS_LANGUAGE: ${PS_LANGUAGE:-en}
+      PS_COUNTRY: ${PS_COUNTRY:-GB}
+      PS_ALL_LANGUAGES: ${PS_ALL_LANGUAGES:-0}
+      PS_FOLDER_ADMIN: ${PS_FOLDER_ADMIN:-admin}
+      PS_FOLDER_INSTALL: ${PS_FOLDER_INSTALL:-install}
+      PS_ENABLE_SSL: ${PS_ENABLE_SSL:-0}
+      DB_USER_FILE: /run/secrets/mysql_user
+      DB_PASSWD_FILE: /run/secrets/mysql_password
+      DB_SERVER: ${DB_SERVER:-mysql}
+      DB_PREFIX: ${DB_PREFIX:-ps_}
+      DB_NAME: ${DB_NAME:-prestashop}
+      ADMIN_MAIL_FILE: /run/secrets/prestashop_mail
+      ADMIN_PASSWD_FILE: /run/secrets/prestashop_admin_password
+    secrets:
+      - mysql_user
+      - mysql_password
+      - prestashop_mail
+      - prestashop_admin_password
+    volumes:
+      - prestashop_data:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - frontend
+      - backend
+
+  mysql:
+    image: ${MYSQL_IMAGE:-mysql:lts}
+    restart: ${MYSQL_RESTART_POLICY:-unless-stopped}
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-prestashop}
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+      MYSQL_USER_FILE: /run/secrets/mysql_user
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
+    secrets:
+      - mysql_root_password
+      - mysql_user
+      - mysql_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - backend
+
+secrets:
+  mysql_user:
+    file: ./docker/secrets/mysql_user.txt
+  mysql_password:
+    file: ./docker/secrets/mysql_password.txt
+  mysql_root_password:
+    file: ./docker/secrets/mysql_root_password.txt
+  prestashop_mail:
+    file: ./docker/secrets/prestashop_mail.txt
+  prestashop_admin_password:
+    file: ./docker/secrets/prestashop_admin_password.txt
+
+networks:
+  frontend:
+  backend:
+    internal: true
+
+volumes:
+  prestashop_data:
+  mysql_data:
