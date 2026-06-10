@@ -1,0 +1,37 @@
+prestashop_docker__tz: Europe/Warsaw
+prestashop_docker__deploy_dir: /home/hawer/prestashop
+prestashop_docker__secrets_path: /home/hawer/prestashop/secrets
+prestashop_docker__user_uid: 1000
+prestashop_docker__user_gid: 1000
+prestashop_docker__enable_phpmyadmin: false
+
+prestashop_docker__phpmyadmin_service_name: phpmyadmin
+prestashop_docker__phpmyadmin_external_port: 8071
+prestashop_docker__phpmyadmin_image: "phpmyadmin:5-apache"
+prestashop_docker__phpmyadmin_restart_policy: unless-stopped
+prestashop_docker__phpmyadmin_absolute_uri:
+prestashop_docker__phpmyadmin_upload_limit: "64M"
+
+prestashop_docker__ps_service_name: prestashop
+prestashop_docker__ps_image: prestashop/prestashop:9
+prestashop_docker__ps_restart_policy: unless-stopped
+prestashop_docker__ps_external_port: 8080
+prestashop_docker__ps_language: "en"
+prestashop_docker__ps_country: "GB"
+prestashop_docker__ps_all_languages: 0
+prestashop_docker__ps_folder_admin: admin
+prestashop_docker__ps_folder_install: install
+prestashop_docker__ps_enable_ssl: 0
+prestashop_docker__ps_domain: "localhost:{{ prestashop_docker__ps_external_port }}"
+prestashop_docker__ps_demo_mode: 0
+prestashop_docker__ps_host_mode: 0
+prestashop_docker__ps_dev_mode: 0
+prestashop_docker__ps_install_auto: 0
+prestashop_docker__ps_install_db: 0
+prestashop_docker__ps_erase_db: 0
+
+prestashop_docker__mysql_service_name: mysql
+prestashop_docker__mysql_image: mysql:lts
+prestashop_docker__mysql_restart_policy: unless-stopped
+prestashop_docker__db_name: "prestashop"
+prestashop_docker__db_prefix: "ps_"

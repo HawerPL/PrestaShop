@@ -1,0 +1,4 @@
+prestashop_docker__ps_external_port: 8073
+prestashop_docker__ps_domain: "hawer.localhost.pl:{{ prestashop_docker__ps_external_port }}"
+prestashop_docker__ps_enable_ssl: 0
+prestashop_docker__tz: Europe/Warsaw

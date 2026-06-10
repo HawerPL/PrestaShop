@@ -1,0 +1,60 @@
+---
+- name: Create PrestaShop directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ prestashop_docker__user_uid | default('1000') }}"
+    group: "{{ prestashop_docker__user_gid | default('1000') }}"
+    mode: '0755'
+  loop:
+    - "{{ prestashop_docker__deploy_dir }}"
+    - "{{ prestashop_docker__secrets_path }}"
+
+- name: Create secrets
+  ansible.builtin.copy:
+    content: "{{ item.value }}"
+    dest: "{{ prestashop_docker__deploy_dir }}/secrets/{{ item.name }}"
+    owner: "{{ prestashop_docker__user_uid | default('1000') }}"
+    group: "{{ prestashop_docker__user_gid | default('1000') }}"
+    mode: '0600'
+  loop:
+    - { name: mysql_password.txt, value: "{{ mysql_password }}" }
+    - { name: mysql_root_password.txt, value: "{{ mysql_root_password }}" }
+    - { name: mysql_user.txt, value: "{{ mysql_user }}" }
+    - { name: prestashop_mail.txt, value: "{{ prestashop_admin_mail }}" }
+    - { name: prestashop_admin_password.txt, value: "{{ prestashop_admin_password }}" }
+  no_log: true
+
+- name: Deploy .env
+  ansible.builtin.template:
+    src: .env.j2
+    dest: "{{ prestashop_docker__deploy_dir }}/.env"
+    mode: '0644'
+
+- name: Deploy docker compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ prestashop_docker__deploy_dir }}/docker-compose.yml"
+    mode: '0644'
+  notify: Restart PrestaShop stack
+
+- name: Ensure PrestaShop is running
+  community.docker.docker_compose_v2:
+    project_src: "{{ prestashop_docker__deploy_dir }}"
+    state: present
+
+- name: Ensure phpmyadmin is running
+  community.docker.docker_compose_v2:
+    project_src: "{{ prestashop_docker__deploy_dir }}"
+    profiles:
+      - phpmyadmin
+    state: present
+  when: prestashop_docker__enable_phpmyadmin
+
+- name: Stop phpmyadmin when disabled
+  community.docker.docker_compose_v2:
+    project_src: "{{ prestashop_docker__deploy_dir }}"
+    profiles:
+      - phpmyadmin
+    state: absent
+  when: not prestashop_docker__enable_phpmyadmin

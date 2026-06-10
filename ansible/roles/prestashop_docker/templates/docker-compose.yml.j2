@@ -1,0 +1,106 @@
+services:
+  {{ prestashop_docker__ps_service_name }}:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        PRESTASHOP_IMAGE: ${PS_IMAGE}
+    restart: ${PS_RESTART_POLICY}
+    ports:
+      - ${PS_EXTERNAL_PORT}:80
+    environment:
+      PS_DEV_MODE: ${PS_DEV_MODE}
+      PS_HOST_MODE: ${PS_HOST_MODE}
+      PS_DEMO_MODE: ${PS_DEMO_MODE}
+      PS_INSTALL_AUTO: ${PS_INSTALL_AUTO}
+      PS_ERASE_DB: ${PS_ERASE_DB}
+      PS_INSTALL_DB: ${PS_INSTALL_DB}
+      PS_DOMAIN: ${PS_DOMAIN}
+      PS_LANGUAGE: ${PS_LANGUAGE}
+      PS_COUNTRY: ${PS_COUNTRY}
+      PS_ALL_LANGUAGES: ${PS_ALL_LANGUAGES}
+      PS_FOLDER_ADMIN: ${PS_FOLDER_ADMIN}
+      PS_FOLDER_INSTALL: ${PS_FOLDER_INSTALL}
+      PS_ENABLE_SSL: ${PS_ENABLE_SSL}
+      DB_USER_FILE: /run/secrets/mysql_user
+      DB_PASSWD_FILE: /run/secrets/mysql_password
+      DB_SERVER: ${DB_SERVER}
+      DB_PREFIX: ${DB_PREFIX}
+      DB_NAME: ${DB_NAME}
+      ADMIN_MAIL_FILE: /run/secrets/prestashop_mail
+      ADMIN_PASSWD_FILE: /run/secrets/prestashop_admin_password
+    secrets:
+      - mysql_user
+      - mysql_password
+      - prestashop_mail
+      - prestashop_admin_password
+    volumes:
+      - prestashop_data:/var/www/html
+    depends_on:
+      {{ prestashop_docker__mysql_service_name }}:
+        condition: service_healthy
+    networks:
+      - frontend
+      - backend
+
+  {{ prestashop_docker__mysql_service_name }}:
+    image: ${MYSQL_IMAGE}
+    restart: ${MYSQL_RESTART_POLICY}
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+      MYSQL_USER_FILE: /run/secrets/mysql_user
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
+    secrets:
+      - mysql_root_password
+      - mysql_user
+      - mysql_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - backend
+
+  {{ prestashop_docker__phpmyadmin_service_name }}:
+    image: ${PHPMYADMIN_IMAGE}
+    restart: ${PHPMYADMIN_RESTART_POLICY}
+    profiles: [phpmyadmin]
+    ports:
+      - ${PHPMYADMIN_EXTERNAL_PORT}:80
+    environment:
+      PMA_HOST: ${DB_SERVER}
+      PMA_PORT: 3306
+      PMA_ABSOLUTE_URI: ${PHPMYADMIN_ABSOLUTE_URI}
+      UPLOAD_LIMIT: ${PHPMYADMIN_UPLOAD_LIMIT}
+    depends_on:
+      {{ prestashop_docker__mysql_service_name }}:
+        condition: service_healthy
+    networks:
+      - frontend
+      - backend
+
+secrets:
+  mysql_user:
+    file: {{ prestashop_docker__secrets_path }}/mysql_user.txt
+  mysql_password:
+    file: {{ prestashop_docker__secrets_path }}/mysql_password.txt
+  mysql_root_password:
+    file: {{ prestashop_docker__secrets_path }}/mysql_root_password.txt
+  prestashop_mail:
+    file: {{ prestashop_docker__secrets_path }}/prestashop_mail.txt
+  prestashop_admin_password:
+    file: {{ prestashop_docker__secrets_path }}/prestashop_admin_password.txt
+
+networks:
+  frontend:
+  backend:
+    internal: true
+
+volumes:
+  prestashop_data:
+  mysql_data:

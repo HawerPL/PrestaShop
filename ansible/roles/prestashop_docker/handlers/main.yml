@@ -1,0 +1,17 @@
+---
+- name: Restart PrestaShop
+  listen: Restart PrestaShop stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ prestashop_docker__deploy_dir }}"
+    state: present
+    recreate: always
+
+- name: Restart phpmyadmin
+  listen: Restart PrestaShop stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ prestashop_docker__deploy_dir }}"
+    profiles:
+      - phpmyadmin
+    state: present
+    recreate: always
+  when: prestashop_docker__enable_phpmyadmin

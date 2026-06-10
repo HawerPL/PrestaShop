@@ -1,0 +1,10 @@
+mysql_root_password: "{{ vault_mysql_root_password }}"
+mysql_password: "{{ vault_mysql_password }}"
+mysql_user: "{{ vault_mysql_user }}"
+prestashop_admin_password: "{{ vault_prestashop_admin_password }}"
+prestashop_admin_mail: "{{ vault_prestashop_admin_mail }}"
+
+prestashop_docker__ps_language: "pl"
+prestashop_docker__ps_country: "pl"
+
+prestashop_docker__enable_phpmyadmin: true
